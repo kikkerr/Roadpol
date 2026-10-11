@@ -1,0 +1,28 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'be.verkeersapp.app'
+    compileSdk 34
+    defaultConfig {
+        applicationId 'be.verkeersapp.app'
+        minSdk 24
+        targetSdk 34
+        versionCode 21
+        versionName '3.0'
+    }
+    signingConfigs {
+        roadpol {
+            storeFile file('roadpol.keystore')
+            storePassword 'roadpol123'
+            keyAlias 'roadpol'
+            keyPassword 'roadpol123'
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            // vaste sleutel: nieuwe versies installeren dan gewoon over de vorige heen
+            signingConfig file('roadpol.keystore').exists() ? signingConfigs.roadpol : signingConfigs.debug
+        }
+    }
+}
