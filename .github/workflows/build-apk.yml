@@ -13,8 +13,22 @@ jobs:
         run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
       - uses: gradle/actions/setup-gradle@v4
         with: { gradle-version: 8.7 }
-      - run: gradle assembleRelease --no-daemon
+      - name: Project klaarzetten en APK bouwen
+        run: |
+          APP=$(find . -path '*/app/build.gradle' | head -1)
+          if [ -z "$APP" ]; then
+            echo "FOUT: de map app/ met build.gradle staat niet in de repo. Dit staat er wel:"
+            find . -maxdepth 3 -not -path './.git/*' | head -60
+            exit 1
+          fi
+          PROJ=$(dirname "$(dirname "$APP")")
+          echo "Project staat in: $PROJ"
+          cd "$PROJ"
+          printf '%s\n' "pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }" "dependencyResolutionManagement { repositories { google(); mavenCentral() } }" "rootProject.name = 'Roadpol'" "include ':app'" > settings.gradle
+          printf '%s\n' "plugins { id 'com.android.application' version '8.5.2' apply false }" > build.gradle
+          printf '%s\n' "org.gradle.jvmargs=-Xmx2g" "android.nonTransitiveRClass=true" > gradle.properties
+          gradle assembleRelease --no-daemon
       - uses: actions/upload-artifact@v4
         with:
-          name: Roadpol
-          path: app/build/outputs/apk/release/*.apk
+          name: Roadpol-apk
+          path: '**/build/outputs/apk/release/*.apk'
